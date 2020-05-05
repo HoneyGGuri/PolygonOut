@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
     O.2 : 함수 스크립트 추가 작성 및 애니메이션 일부 수정
         메인 카메라의 Idle과 CloseUp의 로직이 잘 못된 것을 수정
         드래그시 일정 횟수만큼 공이 튕기고 원점으로 돌아오는 스크립트 추가
-        점수 및 블록 생성 관련 스크립트 수정 중
+        점수 및 블록, 아이템 생성 관련 스크립트 수정 중
 
 */
 #endregion
@@ -50,7 +50,7 @@ public class PolygonCommand : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-
+        if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
     }
     #endregion 태그에 따른 호출
 
@@ -117,6 +117,25 @@ public class PolygonCommand : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))//처음 터치했을 때 위치 계산
             firstPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);//카메라 고려해서 Z+10
+        
+        //공들이 움직이고 있다면 움직일 수 없다.
+        shotable = true;
+        for (int i = 0; i < BallGroup.childCount; i++)
+            if (BallGroup.GetChild(i).GetComponent<PolygonCommand>().isMoving) shotable = false;
+        if (isBlockMoving) shotable = false;
+
+        //움직이는 중이면 Update_GM 실행 불가
+        if (!shotable) return;
+        
+        if(shotTrigger && shotable)
+        {
+            shotTrigger = false;
+            BlockGenerator();
+            timeDelay = 0;
+        }
+        timeDelay += Time.deltaTime;
+        if (timeDelay < 0.1f) return;//버그 방지용 딜레이
+
         bool isMouse = Input.GetMouseButton(0);
         if(isMouse)//만약 계속 터치 중이면
         {
@@ -194,10 +213,58 @@ public class PolygonCommand : MonoBehaviour
         else if (stage <= 200) count = randBlock < 8 ? 5 : (randBlock < 20 ? 6 : 7);
         else count = randBlock < 10 ? 6 : (randBlock < 20 ? 7 : 8);
 
-        if (isNewRecord == true)
+        List<Vector3> SpawnList = new List<Vector3>();
+        //최대 한 번에 맵 밖에서 8개의 블럭이 나옴
+        //6개는 위 아래로
+        //수정 많이 필요!!!!!!!!!!!!!!
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, 68, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -68, 0));
+        //7개 이상 나오면 2개는 양 옆으로
+        if (count>=7)
+            for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(68-i*136,-5,0));
+
+        for(int i = 0; i < count; i++)
         {
-            print("제거 예정");
+            int rand = Random.Range(0, SpawnList.Count);
+
+            Transform TR = Instantiate(P_Block, SpawnList[rand], QI).transform;
+            TR.SetParent(BlockGroup);
+            TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 10 ? 1 : stage / 10).ToString();
+
+            SpawnList.RemoveAt(rand);
         }
+        Instantiate(P_Item, SpawnList[Random.Range(0, SpawnList.Count)], QI).transform.SetParent(BlockGroup);
+        isBlockMoving = true;
+        for (int i = 0; i < BlockGroup.childCount; i++) StartCoroutine(BlockMoveDown(BlockGroup.GetChild(i)));
+
+        
+    }
+
+    IEnumerator BlockMoveDown(Transform TR)
+    {//수정 많이 필요!!!!!!!!!!!!!!
+        yield return new WaitForSeconds(0.2f);
+        Vector3 target=Vector3.zero;
+        if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-33,-20,0);
+        else if (TR.position.x < 0 && TR.position.y > -5) target = TR.position + new Vector3(33, -20, 0);
+        else if (TR.position.x == 0 && TR.position.y > -5) target = TR.position + new Vector3(0, -20, 0);
+        else if (TR.position.x > 0 && TR.position.y < -5) target = TR.position + new Vector3(-33, 20, 0);
+        else if (TR.position.x < 0 && TR.position.y < -5) target = TR.position + new Vector3(33, 20, 0);
+        else if (TR.position.x == 0 && TR.position.y < -5) target = TR.position + new Vector3(0, 20, 0);
+        else if (TR.position.x > 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
+        else if (TR.position.x < 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
+        
+
+        float TT = 1.5f;
+        while (true)
+        {
+            yield return null; TT -= Time.deltaTime * 1.5f;
+            TR.position = Vector3.MoveTowards(TR.position, target, TT);
+            TR.Rotate(new Vector3(0, 0, 3),Space.Self);
+            TR.Rotate(new Vector3(0, 0, 2), Space.Self);
+            TR.Rotate(new Vector3(0, 0, 1), Space.Self);
+            if (TR.position == target) break;
+        }
+        isBlockMoving = false;
     }
 
     #endregion 블럭
@@ -235,9 +302,9 @@ public class PolygonCommand : MonoBehaviour
         {
             CurCnt--;
             print("vel = " + RB.velocity.x + " / " + RB.velocity.y + " | CurCnt = " + CurCnt);
-            if(CurCnt>BounceCnt/2)
-                RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
-            else RB.velocity = new Vector2(RB.velocity.x * (decrease-0.03f), RB.velocity.y * (decrease-0.03f));
+            if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 40 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
+            RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
+
             if (CurCnt == 0)
             {
                 RB.velocity=new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
@@ -261,9 +328,30 @@ public class PolygonCommand : MonoBehaviour
             }
             
         }
-
     }
-    
+
+    IEnumerator OnTriggerEnter2D_Ball(Collider2D collision)
+    {
+        //아이템과 공이 충돌시 스크립트를 작성해야함
+        if (collision.gameObject.CompareTag("Item"))
+        {
+            Destroy(collision.gameObject);
+            //파티클 바꿔야함(지금 블럭용)
+            Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, PC.QI), 1);
+
+            PC.S_Item.Play();
+            Transform TR = Instantiate(P_Item, collision.transform.position, PC.QI).transform;
+            TR.SetParent(GameObject.Find("ItemGroup").transform);
+            Vector3 targetPos = new Vector3(TR.position.x, PC.centerY, 0);
+
+            while (true)
+            {
+                yield return null;
+                TR.position = Vector3.MoveTowards(TR.position, targetPos, 2.5f);
+                if (TR.position == targetPos) yield break;
+            }
+        }
+    }
 
     #endregion BallScript.Cs
 

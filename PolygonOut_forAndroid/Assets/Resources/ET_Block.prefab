@@ -266,6 +266,7 @@ GameObject:
   - component: {fileID: 124801436526765856}
   - component: {fileID: 124801436526765887}
   - component: {fileID: 124801436526765886}
+  - component: {fileID: 95001250125752974}
   m_Layer: 8
   m_Name: ET_Block
   m_TagString: Block
@@ -397,3 +398,22 @@ PolygonCollider2D:
       - {x: 1.795, y: -1.555}
       - {x: 1.795, y: -1.495}
       - {x: 1.785, y: -1.4649999}
+--- !u!95 &95001250125752974
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124801436526765885}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 888599a0f1f0a844ab2406e8a6790c6e, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
