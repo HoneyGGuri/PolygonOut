@@ -5,10 +5,10 @@ TagManager:
   serializedVersion: 2
   tags:
   - Wall
-  - GameManger
   - Block
   - Item
   - Ball
+  - GameManager
   layers:
   - Default
   - TransparentFX

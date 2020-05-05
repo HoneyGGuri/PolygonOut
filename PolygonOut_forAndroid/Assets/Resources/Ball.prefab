@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6201785625714562237}
   - component: {fileID: 5863223720051536552}
   - component: {fileID: 114386193876414690}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Ball
   m_TagString: Ball
   m_Icon: {fileID: 0}
@@ -237,6 +237,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41a801e6bfccbd541a79962fd2d9f4e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  centerY: -6
+  P_Ball: {fileID: 0}
+  P_Item: {fileID: 0}
+  P_Block: {fileID: 0}
+  P_ParticleYellow: {fileID: 0}
+  BallPreview: {fileID: 0}
+  Arrow: {fileID: 0}
+  GameOverPanel: {fileID: 0}
+  BallPowerTextObj: {fileID: 0}
+  ItemGroup: {fileID: 0}
+  BlockGroup: {fileID: 0}
+  BallGroup: {fileID: 0}
+  MouseLR: {fileID: 0}
+  BallLR: {fileID: 0}
+  BestStageText: {fileID: 0}
+  StageText: {fileID: 0}
+  BallPowerText: {fileID: 0}
+  FinalStageText: {fileID: 0}
+  NewRecordText: {fileID: 0}
+  blockColor: []
+  itemColor: []
+  S_GameOver: {fileID: 0}
+  S_Item: {fileID: 0}
+  S_Plus: {fileID: 0}
+  S_Block: []
+  QI: {x: 0, y: 0, z: 0, w: 1}
+  shotTrigger: 0
+  shotable: 0
+  veryFirstPos: {x: 0, y: 0, z: 0}
+  RB: {fileID: 6201785625714562237}
+  isMoving: 0
 --- !u!1 &9207572032450223171
 GameObject:
   m_ObjectHideFlags: 0
