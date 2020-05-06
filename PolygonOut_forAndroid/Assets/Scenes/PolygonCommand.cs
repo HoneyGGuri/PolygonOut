@@ -56,7 +56,7 @@ public class PolygonCommand : MonoBehaviour
     {
         print(collision.gameObject.tag+"!! "+CompareTag("Ball"));
         if (CompareTag("Threshold")) StartCoroutine(OnTriggerEnter2D_Threshold(collision));
-        //else if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
+        else if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
     }
     #endregion 태그에 따른 호출
 
@@ -335,7 +335,7 @@ public class PolygonCommand : MonoBehaviour
             }
             
         }
-        /*
+        
         // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
         if(Col.CompareTag("Block"))
         {
@@ -358,7 +358,7 @@ public class PolygonCommand : MonoBehaviour
                 Destroy(Col);
                 //Destroy(Instantiate(PC.P_ParticleRed, col.transform.position, QI), 1);
             }
-        }*/
+        }
     }
 
     IEnumerator OnCollisionEnter2D_Threshold(Collision2D collision)

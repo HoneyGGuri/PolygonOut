@@ -237,7 +237,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41a801e6bfccbd541a79962fd2d9f4e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  centerY: -6
+  centerY: -5
   P_Ball: {fileID: 0}
   P_Item: {fileID: 0}
   P_Block: {fileID: 0}
@@ -246,6 +246,7 @@ MonoBehaviour:
   Arrow: {fileID: 0}
   GameOverPanel: {fileID: 0}
   BallPowerTextObj: {fileID: 0}
+  Threshold: {fileID: 0}
   ItemGroup: {fileID: 0}
   BlockGroup: {fileID: 0}
   BallGroup: {fileID: 0}
