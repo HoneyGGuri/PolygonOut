@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
         메인 카메라의 Idle과 CloseUp의 로직이 잘 못된 것을 수정
         드래그시 일정 횟수만큼 공이 튕기고 원점으로 돌아오는 스크립트 추가
         점수 및 블록, 아이템 생성 관련 스크립트 수정 중
+    S.1 : 블럭 부셔지는 코드 추가
 
 */
 #endregion
@@ -327,6 +328,30 @@ public class PolygonCommand : MonoBehaviour
                 
             }
             
+        }
+
+        // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
+        if(Col.CompareTag("Block"))
+        {
+            Text BlockText = Col.transform.GetChild(0).GetComponentInChildren<Text>();
+            int blockValue = int.Parse(BlockText.text) - 1;
+
+            for(int i = 0; i < PC.S_Block.Length; i++)
+            {
+                if ( PC.S_Block[i].isPlaying) continue;
+                else { PC.S_Block[i].Play(); break; }
+            }
+
+            if(blockValue > 0)
+            {
+                BlockText.text = blockValue.ToString();
+                //Col.GetComponent<Animation>().SetTrigger("Shock");
+            }
+            else
+            {
+                Destroy(Col);
+                //Destroy(Instantiate(PC.P_ParticleRed, col.transform.position, QI), 1);
+            }
         }
     }
 
