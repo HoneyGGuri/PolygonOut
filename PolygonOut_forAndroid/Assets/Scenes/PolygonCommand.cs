@@ -14,6 +14,8 @@ using UnityEngine.SceneManagement;
         드래그시 일정 횟수만큼 공이 튕기고 원점으로 돌아오는 스크립트 추가
         점수 및 블록, 아이템 생성 관련 스크립트 수정 중
     S.1 : 블럭 부셔지는 코드 추가
+    O.3 : 애니메이션, 디자인 부분 수정
+        임계선 추가. 임계선과 블럭, 아이템 충돌 코드 작성 중
 
 */
 #endregion
@@ -52,8 +54,9 @@ public class PolygonCommand : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
+        print(collision.gameObject.tag+"!! "+CompareTag("Ball"));
         if (CompareTag("Threshold")) StartCoroutine(OnTriggerEnter2D_Threshold(collision));
+        //else if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
     }
     #endregion 태그에 따른 호출
 
@@ -64,7 +67,7 @@ public class PolygonCommand : MonoBehaviour
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
     public GameObject P_Ball, P_Item, P_Block, P_ParticleYellow;//프리팹들
-    public GameObject BallPreview, Arrow, GameOverPanel, BallPowerTextObj;
+    public GameObject BallPreview, Arrow, GameOverPanel, BallPowerTextObj, Threshold;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
     public Text BestStageText, StageText, BallPowerText, FinalStageText, NewRecordText;
@@ -80,7 +83,7 @@ public class PolygonCommand : MonoBehaviour
     int stage, timerCount, launchIndex;
     int shootPower=10000;//발사 속도
     float decrease = 0.95f;//감속 배율
-    int BounceCnt = 10,CurCnt;//튕기는 횟수
+    int BounceCnt = 4,CurCnt;//튕기는 횟수
     bool timerStart, isDie, isNewRecord, isBlockMoving;
     float timeDelay;
 
@@ -296,7 +299,7 @@ public class PolygonCommand : MonoBehaviour
     //공이 충돌시 좌표를 저장하기 위한 함수
     IEnumerator OnCollisionEnter2D_Ball(Collision2D collision)
     {
-        
+       
         Physics2D.IgnoreLayerCollision(2, 2);
         GameObject Col = collision.gameObject;
 
@@ -332,7 +335,7 @@ public class PolygonCommand : MonoBehaviour
             }
             
         }
-
+        /*
         // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
         if(Col.CompareTag("Block"))
         {
@@ -355,6 +358,22 @@ public class PolygonCommand : MonoBehaviour
                 Destroy(Col);
                 //Destroy(Instantiate(PC.P_ParticleRed, col.transform.position, QI), 1);
             }
+        }*/
+    }
+
+    IEnumerator OnCollisionEnter2D_Threshold(Collision2D collision)
+    {
+
+        Physics2D.IgnoreLayerCollision(2, 2);
+        GameObject Col = collision.gameObject;
+
+        //벽만? 블럭도?
+        print("block ");
+        if (Col.CompareTag("Block"))
+        {
+            yield return null;
+            print("block ");
+            Destroy(Col.gameObject);
         }
     }
 

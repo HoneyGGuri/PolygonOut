@@ -167,7 +167,7 @@ GameObject:
   - component: {fileID: 1373360643684100462}
   - component: {fileID: 1746919111898227156}
   - component: {fileID: 6245455393302631093}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ER_Block
   m_TagString: Block
   m_Icon: {fileID: 0}
