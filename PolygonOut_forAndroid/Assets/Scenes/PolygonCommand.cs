@@ -46,11 +46,13 @@ public class PolygonCommand : MonoBehaviour
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (CompareTag("Ball")) StartCoroutine(OnCollisionEnter2D_Ball(collision));
+
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
         if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
+        if (CompareTag("Threshold")) StartCoroutine(OnTriggerEnter2D_Threshold(collision));
     }
     #endregion 태그에 따른 호출
 
@@ -75,8 +77,8 @@ public class PolygonCommand : MonoBehaviour
 
     Vector3 firstPos, secondPos, gap;
     int stage, timerCount, launchIndex;
-    int shootPower=15000;//발사 속도
-    float decrease = 0.9f;//감속 배율
+    int shootPower=10000;//발사 속도
+    float decrease = 0.95f;//감속 배율
     int BounceCnt = 10,CurCnt;//튕기는 횟수
     bool timerStart, isDie, isNewRecord, isBlockMoving;
     float timeDelay;
@@ -302,7 +304,8 @@ public class PolygonCommand : MonoBehaviour
         {
             CurCnt--;
             print("vel = " + RB.velocity.x + " / " + RB.velocity.y + " | CurCnt = " + CurCnt);
-            if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 40 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
+            //너무 일찍 가속도가 내려가면 보정
+            if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 70 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
             RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
 
             if (CurCnt == 0)
@@ -352,6 +355,32 @@ public class PolygonCommand : MonoBehaviour
             }
         }
     }
+    IEnumerator OnTriggerEnter2D_Threshold(Collider2D collision)
+    {
+        print("what");
+        //아이템과 공이 충돌시 스크립트를 작성해야함
+        if (collision.gameObject.CompareTag("Item"))
+        {
+            yield return null;
+            Destroy(collision.gameObject);
+            //파티클 바꿔야함(지금 블럭용)
+            /*Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, PC.QI), 1);
+            
+            
+            while (true)
+            {
+                
+            }*/
+        }
+        else if (collision.gameObject.CompareTag("Block"))
+        {
+            print("fuck");
+
+            yield return null;
+            
+        }
+    }
+
 
     #endregion BallScript.Cs
 

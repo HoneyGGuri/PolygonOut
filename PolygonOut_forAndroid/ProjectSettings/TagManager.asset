@@ -9,6 +9,7 @@ TagManager:
   - Item
   - Ball
   - GameManager
+  - Threshold
   layers:
   - Default
   - TransparentFX

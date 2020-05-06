@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 546597955395953231}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 1}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
   m_Children:
   - {fileID: 7867461381137411278}
   m_Father: {fileID: 0}
@@ -257,7 +257,7 @@ MonoBehaviour:
   FinalStageText: {fileID: 0}
   NewRecordText: {fileID: 0}
   blockColor: []
-  itemColor: []
+  greenColor: {r: 0, g: 0, b: 0, a: 0}
   S_GameOver: {fileID: 0}
   S_Item: {fileID: 0}
   S_Plus: {fileID: 0}
