@@ -16,6 +16,8 @@ using UnityEngine.SceneManagement;
     S.1 : 블럭 부셔지는 코드 추가
     O.3 : 애니메이션, 디자인 부분 수정
         임계선 추가. 임계선과 블럭, 아이템 충돌 코드 작성 중
+    O.4 : 블럭 파괴시 애니메이션, 파티클 관련 코드 수정
+        공이 충돌을 끝내고 시작점으로 돌아갈 때에도 블럭과 아이템을 파괴하는 버그 수정
 
 */
 #endregion
@@ -48,6 +50,7 @@ public class PolygonCommand : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        print(tag+"~~~~");
         if (CompareTag("Ball")) StartCoroutine(OnCollisionEnter2D_Ball(collision));
 
     }
@@ -84,7 +87,7 @@ public class PolygonCommand : MonoBehaviour
     int shootPower=10000;//발사 속도
     float decrease = 0.95f;//감속 배율
     int BounceCnt = 4,CurCnt;//튕기는 횟수
-    bool timerStart, isDie, isNewRecord, isBlockMoving;
+    bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn;
     float timeDelay;
 
     #region 시작
@@ -289,6 +292,7 @@ public class PolygonCommand : MonoBehaviour
 
     public void Launch(Vector3 pos)
     {
+        isReturn = false;
         CurCnt = BounceCnt;
         PC.shotTrigger = true;
         isMoving = true;
@@ -299,10 +303,10 @@ public class PolygonCommand : MonoBehaviour
     //공이 충돌시 좌표를 저장하기 위한 함수
     IEnumerator OnCollisionEnter2D_Ball(Collision2D collision)
     {
-       
+        print(isReturn);
         Physics2D.IgnoreLayerCollision(2, 2);
         GameObject Col = collision.gameObject;
-
+        
         //벽만? 블럭도?
         if (Col.CompareTag("Wall"))
         {
@@ -314,6 +318,7 @@ public class PolygonCommand : MonoBehaviour
 
             if (CurCnt == 0)
             {
+                isReturn = true;
                 RB.velocity=new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
                 yield return new WaitForSeconds(0.3f);
                 RB.velocity = Vector2.zero;
@@ -337,7 +342,7 @@ public class PolygonCommand : MonoBehaviour
         }
         
         // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
-        if(Col.CompareTag("Block"))
+        if(Col.CompareTag("Block") && isReturn==false)
         {
             Text BlockText = Col.transform.GetChild(0).GetComponentInChildren<Text>();
             int blockValue = int.Parse(BlockText.text) - 1;
@@ -351,12 +356,12 @@ public class PolygonCommand : MonoBehaviour
             if(blockValue > 0)
             {
                 BlockText.text = blockValue.ToString();
-                //Col.GetComponent<Animation>().SetTrigger("Shock");
+                Col.GetComponent<Animator>().SetTrigger("Shock");
             }
             else
             {
                 Destroy(Col);
-                //Destroy(Instantiate(PC.P_ParticleRed, col.transform.position, QI), 1);
+                Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, QI), 1);
             }
         }
     }
@@ -380,7 +385,7 @@ public class PolygonCommand : MonoBehaviour
     IEnumerator OnTriggerEnter2D_Ball(Collider2D collision)
     {
         //아이템과 공이 충돌시 스크립트를 작성해야함
-        if (collision.gameObject.CompareTag("Item"))
+        if (collision.gameObject.CompareTag("Item") && isReturn==false)
         {
             Destroy(collision.gameObject);
             //파티클 바꿔야함(지금 블럭용)
