@@ -18,6 +18,7 @@ using UnityEngine.SceneManagement;
         임계선 추가. 임계선과 블럭, 아이템 충돌 코드 작성 중
     O.4 : 블럭 파괴시 애니메이션, 파티클 관련 코드 수정
         공이 충돌을 끝내고 시작점으로 돌아갈 때에도 블럭과 아이템을 파괴하는 버그 수정
+    O.5 : ThresholdScript.cs 추가(한계선 충돌 내용 적용)
 
 */
 #endregion
@@ -50,16 +51,13 @@ public class PolygonCommand : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        print(tag+"~~~~");
         if (CompareTag("Ball")) StartCoroutine(OnCollisionEnter2D_Ball(collision));
 
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        print(collision.gameObject.tag+"!! "+CompareTag("Ball"));
-        if (CompareTag("Threshold")) StartCoroutine(OnTriggerEnter2D_Threshold(collision));
-        else if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
+        if (CompareTag("Ball")) StartCoroutine(OnTriggerEnter2D_Ball(collision));
     }
     #endregion 태그에 따른 호출
 
@@ -70,7 +68,7 @@ public class PolygonCommand : MonoBehaviour
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
     public GameObject P_Ball, P_Item, P_Block, P_ParticleYellow;//프리팹들
-    public GameObject BallPreview, Arrow, GameOverPanel, BallPowerTextObj, Threshold;
+    public GameObject BallPreview, Arrow, GameOverPanel, BallPowerTextObj, Threshold, PausePanel;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
     public Text BestStageText, StageText, BallPowerText, FinalStageText, NewRecordText;
@@ -120,8 +118,34 @@ public class PolygonCommand : MonoBehaviour
 
     public void VeryFirstPosSet(Vector3 pos) { if (veryFirstPos == Vector3.zero) veryFirstPos = pos; }
 
+    public void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            Time.timeScale = 0f;
+            PausePanel.SetActive(true);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            PausePanel.SetActive(false);
+        }
+    }
+
+    public void OnApplicationFocus(bool focus)
+    {
+        
+    }
+
+    public void OnApplicationQuit()
+    {
+        
+    }
+
     void Update_GM()
     {
+        if (isDie) return;
+
         VeryFirstPosSet(new Vector3(0, -5f, 0));
 
         if (Input.GetMouseButtonDown(0))//처음 터치했을 때 위치 계산
@@ -138,6 +162,7 @@ public class PolygonCommand : MonoBehaviour
         
         if(shotTrigger && shotable)
         {
+            BallPowerText.text = "x"+BounceCnt.ToString();
             shotTrigger = false;
             BlockGenerator();
             timeDelay = 0;
@@ -278,6 +303,40 @@ public class PolygonCommand : MonoBehaviour
 
     #endregion 블럭
 
+    public bool Death()
+    {
+        isDie = true;
+        return isDie;
+    }
+
+    public void GameOver()
+    {
+        for (int i = 0; i < BallGroup.childCount; i++)
+            Destroy(BallGroup.GetChild(i).gameObject);
+        Destroy(Instantiate(P_ParticleYellow, veryFirstPos, QI), 1);
+
+        BallPowerTextObj.SetActive(false);
+        BestStageText.gameObject.SetActive(false);
+        StageText.gameObject.SetActive(false);
+
+        
+        Camera.main.GetComponent<Animator>().SetTrigger("closeup");
+        S_GameOver.Play();
+
+        Invoke("PanelOn",1);
+
+
+        return;
+    }
+
+    void PanelOn()
+    {
+        print("here");
+        GameOverPanel.SetActive(true);
+        FinalStageText.text = "스테이지 " + stage.ToString() + "달성";
+        if (isNewRecord) NewRecordText.gameObject.SetActive(true);
+    }
+
     #endregion GameManger.Cs
 
 
@@ -303,7 +362,6 @@ public class PolygonCommand : MonoBehaviour
     //공이 충돌시 좌표를 저장하기 위한 함수
     IEnumerator OnCollisionEnter2D_Ball(Collision2D collision)
     {
-        print(isReturn);
         Physics2D.IgnoreLayerCollision(2, 2);
         GameObject Col = collision.gameObject;
         
@@ -311,12 +369,14 @@ public class PolygonCommand : MonoBehaviour
         if (Col.CompareTag("Wall"))
         {
             CurCnt--;
+            if (CurCnt >= 0) BallPowerText.text = "x" + CurCnt.ToString();
+            else BallPowerText.text = "x0";
             print("vel = " + RB.velocity.x + " / " + RB.velocity.y + " | CurCnt = " + CurCnt);
             //너무 일찍 가속도가 내려가면 보정
             if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 70 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
             RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
 
-            if (CurCnt == 0)
+            if (CurCnt <= 0)
             {
                 isReturn = true;
                 RB.velocity=new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
@@ -344,6 +404,9 @@ public class PolygonCommand : MonoBehaviour
         // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
         if(Col.CompareTag("Block") && isReturn==false)
         {
+            CurCnt--;
+            if (CurCnt >= 0) BallPowerText.text = "x" + CurCnt.ToString();
+            else BallPowerText.text = "x0";
             Text BlockText = Col.transform.GetChild(0).GetComponentInChildren<Text>();
             int blockValue = int.Parse(BlockText.text) - 1;
 
@@ -363,22 +426,29 @@ public class PolygonCommand : MonoBehaviour
                 Destroy(Col);
                 Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, QI), 1);
             }
-        }
-    }
 
-    IEnumerator OnCollisionEnter2D_Threshold(Collision2D collision)
-    {
+            if (CurCnt <= 0)
+            {
+                isReturn = true;
+                RB.velocity = new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
+                yield return new WaitForSeconds(0.3f);
+                RB.velocity = Vector2.zero;
+                yield return new WaitForSeconds(1f);
 
-        Physics2D.IgnoreLayerCollision(2, 2);
-        GameObject Col = collision.gameObject;
+                while (true)
+                {
+                    //yield return new WaitForSeconds(1f);
+                    yield return null;
+                    transform.position = Vector3.MoveTowards(transform.position, PC.veryFirstPos, 3);
 
-        //벽만? 블럭도?
-        print("block ");
-        if (Col.CompareTag("Block"))
-        {
-            yield return null;
-            print("block ");
-            Destroy(Col.gameObject);
+                    if (transform.position == PC.veryFirstPos)
+                    {
+                        isMoving = false;
+                        yield break;
+                    }
+                }
+
+            }
         }
     }
 
@@ -404,31 +474,10 @@ public class PolygonCommand : MonoBehaviour
             }
         }
     }
-    IEnumerator OnTriggerEnter2D_Threshold(Collider2D collision)
-    {
-        print("what");
-        //아이템과 공이 충돌시 스크립트를 작성해야함
-        if (collision.gameObject.CompareTag("Item"))
-        {
-            yield return null;
-            Destroy(collision.gameObject);
-            //파티클 바꿔야함(지금 블럭용)
-            /*Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, PC.QI), 1);
-            
-            
-            while (true)
-            {
-                
-            }*/
-        }
-        else if (collision.gameObject.CompareTag("Block"))
-        {
-            print("fuck");
 
-            yield return null;
-            
-        }
-    }
+
+
+
 
 
     #endregion BallScript.Cs
