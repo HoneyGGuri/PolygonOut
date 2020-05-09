@@ -19,6 +19,7 @@ using UnityEngine.SceneManagement;
     O.4 : 블럭 파괴시 애니메이션, 파티클 관련 코드 수정
         공이 충돌을 끝내고 시작점으로 돌아갈 때에도 블럭과 아이템을 파괴하는 버그 수정
     O.5 : ThresholdScript.cs 추가(한계선 충돌 내용 적용)
+    S.2 : Main 화면 flex
 
 */
 #endregion
@@ -68,7 +69,7 @@ public class PolygonCommand : MonoBehaviour
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
     public GameObject P_Ball, P_Item, P_Block, P_ParticleYellow;//프리팹들
-    public GameObject BallPreview, Arrow, GameOverPanel, BallPowerTextObj, Threshold, PausePanel;
+    public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
     public Text BestStageText, StageText, BallPowerText, FinalStageText, NewRecordText;
@@ -109,8 +110,14 @@ public class PolygonCommand : MonoBehaviour
         cam.rect = rect;
 
         //시작
-        BlockGenerator();
+       // BlockGenerator();
         BestStageText.text = "최고기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+    }
+
+    public void on_start()
+    {
+        MainPanel.SetActive(false);
+        BlockGenerator();
     }
 
     //재시작버튼
@@ -351,6 +358,7 @@ public class PolygonCommand : MonoBehaviour
 
     public void Launch(Vector3 pos)
     {
+        if (pos.x + pos.y + pos.z == 0) return;
         isReturn = false;
         CurCnt = BounceCnt;
         PC.shotTrigger = true;
