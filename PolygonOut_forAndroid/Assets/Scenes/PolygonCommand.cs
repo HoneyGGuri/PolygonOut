@@ -20,6 +20,7 @@ using UnityEngine.SceneManagement;
         공이 충돌을 끝내고 시작점으로 돌아갈 때에도 블럭과 아이템을 파괴하는 버그 수정
     O.5 : ThresholdScript.cs 추가(한계선 충돌 내용 적용)
     S.2 : Main 화면 flex
+    O.6 : 일시정지 화면 추가 및 발사 관련 일부 버그 수정
 
 */
 #endregion
@@ -69,7 +70,7 @@ public class PolygonCommand : MonoBehaviour
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
     public GameObject P_Ball, P_Item, P_Block, P_ParticleYellow;//프리팹들
-    public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel;
+    public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel, MenuButtonGroup;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
     public Text BestStageText, StageText, BallPowerText, FinalStageText, NewRecordText;
@@ -86,7 +87,7 @@ public class PolygonCommand : MonoBehaviour
     int shootPower=10000;//발사 속도
     float decrease = 0.95f;//감속 배율
     int BounceCnt = 4,CurCnt;//튕기는 횟수
-    bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn;
+    bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn,isPause=false;
     float timeDelay;
 
     #region 시작
@@ -122,20 +123,28 @@ public class PolygonCommand : MonoBehaviour
 
     //재시작버튼
     public void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-
+    public void Pause() => isPause = !isPause;
+    public void Quit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#elif UNITY_WEBPLAYER
+        Application.OpenURL("http://google.com");
+#else
+        Application.Quit();
+#endif
+    }
     public void VeryFirstPosSet(Vector3 pos) { if (veryFirstPos == Vector3.zero) veryFirstPos = pos; }
 
     public void OnApplicationPause(bool pause)
     {
         if (pause)
         {
-            Time.timeScale = 0f;
-            PausePanel.SetActive(true);
+            Pause();
         }
         else
         {
-            Time.timeScale = 1f;
-            PausePanel.SetActive(false);
+            //Pause();
         }
     }
 
@@ -148,15 +157,45 @@ public class PolygonCommand : MonoBehaviour
     {
         
     }
-
+    bool NowPlaying()
+    {
+        print(PausePanel.activeSelf + " / " + MainPanel.activeSelf);
+        if (PausePanel.activeSelf == false && MainPanel.activeSelf == false)
+            return true;
+        else return false;
+    }
     void Update_GM()
     {
         if (isDie) return;
 
+        if (isPause)
+        {
+            BallPowerTextObj.SetActive(false);
+            BestStageText.gameObject.SetActive(false);
+            StageText.gameObject.SetActive(false);
+            PausePanel.SetActive(true);
+            MenuButtonGroup.SetActive(true);
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            BallPowerTextObj.SetActive(true);
+            BestStageText.gameObject.SetActive(true);
+            StageText.gameObject.SetActive(true);
+            MenuButtonGroup.SetActive(false);
+            PausePanel.SetActive(false);
+        }
+
         VeryFirstPosSet(new Vector3(0, -5f, 0));
 
-        if (Input.GetMouseButtonDown(0))//처음 터치했을 때 위치 계산
+        if (Input.GetMouseButtonDown(0) && NowPlaying())
+        {//처음 터치했을 때 위치 계산
+            print("First Input : " + Camera.main.ScreenToWorldPoint(Input.mousePosition));
+            
             firstPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);//카메라 고려해서 Z+10
+
+        }
         
         //공들이 움직이고 있다면 움직일 수 없다.
         shotable = true;
@@ -167,7 +206,8 @@ public class PolygonCommand : MonoBehaviour
         //움직이는 중이면 Update_GM 실행 불가
         if (!shotable) return;
         
-        if(shotTrigger && shotable)
+        
+        if(shotTrigger)
         {
             BallPowerText.text = "x"+BounceCnt.ToString();
             shotTrigger = false;
@@ -175,15 +215,14 @@ public class PolygonCommand : MonoBehaviour
             timeDelay = 0;
         }
         timeDelay += Time.deltaTime;
-        if (timeDelay < 0.1f) return;//버그 방지용 딜레이
+        if (timeDelay < 0.5f) return;//버그 방지용 딜레이
 
         bool isMouse = Input.GetMouseButton(0);
-        if(isMouse)//만약 계속 터치 중이면
+        if(isMouse && NowPlaying() && firstPos.y<64)//만약 계속 터치 중이면
         {
             secondPos =Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
-            if ((secondPos - firstPos).magnitude < 1) return;//너무 가까우면(선을 그리기 작다면)
+            if ((secondPos - firstPos).magnitude < 3) return;//너무 가까우면(선을 그리기 작다면)
             gap = (secondPos - firstPos).normalized;
-
             //미리보기
             Arrow.transform.position = veryFirstPos;
             Arrow.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(gap.y, gap.x) * Mathf.Rad2Deg);
@@ -195,22 +234,25 @@ public class PolygonCommand : MonoBehaviour
             MouseLR.SetPosition(1, secondPos);
             BallLR.SetPosition(0, veryFirstPos);
             BallLR.SetPosition(1, (Vector3)hit.point - gap * 1.5f);
+
+
         }
         //터치 중일때만 보임
-        BallPreview.SetActive(isMouse);
-        Arrow.SetActive(isMouse);
+        BallPreview.SetActive(isMouse && NowPlaying() && firstPos.y < 64);
+        Arrow.SetActive(isMouse && NowPlaying() && firstPos.y < 64);
 
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(0) && firstPos.y<64)
         {//라인 지우기
+            secondPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
             MouseLR.SetPosition(0, Vector3.zero);
             MouseLR.SetPosition(1, Vector3.zero);
             BallLR.SetPosition(0, Vector3.zero);
             BallLR.SetPosition(1, Vector3.zero);
 
             timerStart = true;
-            
+
             //veryFirstPos
-            firstPos=Vector3.zero;
+           
             
         }
     }
@@ -220,6 +262,8 @@ public class PolygonCommand : MonoBehaviour
         if(timerStart && ++timerCount == 3)
         {
             timerCount = 0;
+            print(firstPos + " / " + secondPos);
+            if (firstPos == secondPos) return;
             BallGroup.GetChild(launchIndex++).GetComponent<PolygonCommand>().Launch(gap);
             if (launchIndex == BallGroup.childCount)
             {
@@ -231,11 +275,12 @@ public class PolygonCommand : MonoBehaviour
 
     }
 
-    #endregion 시작
+#endregion 시작
 
-    #region 블럭
+#region 블럭
     void BlockGenerator()
     {
+        print("BlockGenerator Start");
         StageText.text = "스테이지 " + (++stage).ToString();
         if(PlayerPrefs.GetInt("BestStage",0) < stage)
         {
@@ -258,8 +303,8 @@ public class PolygonCommand : MonoBehaviour
         //최대 한 번에 맵 밖에서 8개의 블럭이 나옴
         //6개는 위 아래로
         //수정 많이 필요!!!!!!!!!!!!!!
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, 68, 0));
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -68, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -5+68, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -5-68, 0));
         //7개 이상 나오면 2개는 양 옆으로
         if (count>=7)
             for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(68-i*136,-5,0));
@@ -276,6 +321,7 @@ public class PolygonCommand : MonoBehaviour
         }
         Instantiate(P_Item, SpawnList[Random.Range(0, SpawnList.Count)], QI).transform.SetParent(BlockGroup);
         isBlockMoving = true;
+        print("Call MoveDown");
         for (int i = 0; i < BlockGroup.childCount; i++) StartCoroutine(BlockMoveDown(BlockGroup.GetChild(i)));
 
         
@@ -284,7 +330,9 @@ public class PolygonCommand : MonoBehaviour
     IEnumerator BlockMoveDown(Transform TR)
     {//수정 많이 필요!!!!!!!!!!!!!!
         yield return new WaitForSeconds(0.2f);
-        Vector3 target=Vector3.zero;
+        Vector3 center=new Vector3(0,centerY,0);
+        print("BlockMoveDown Start");
+        /*
         if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-33,-20,0);
         else if (TR.position.x < 0 && TR.position.y > -5) target = TR.position + new Vector3(33, -20, 0);
         else if (TR.position.x == 0 && TR.position.y > -5) target = TR.position + new Vector3(0, -20, 0);
@@ -293,22 +341,29 @@ public class PolygonCommand : MonoBehaviour
         else if (TR.position.x == 0 && TR.position.y < -5) target = TR.position + new Vector3(0, 20, 0);
         else if (TR.position.x > 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
         else if (TR.position.x < 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
+        Vector3 dir = (target - TR.position).magnitude;
+        */
+
+        //블럭이 target 방향으로 회전하는 코드
+        Vector3 dir = (TR.position-center);
+        Vector3 target = new Vector3(dir.x, dir.y, dir.z);
+        Quaternion angle = Quaternion.LookRotation(dir);
+        //TR.rotation = Quaternion.Slerp(TR.rotation, angle, 0.1f);
         
 
         float TT = 1.5f;
         while (true)
         {
-            yield return null; TT -= Time.deltaTime * 1.5f;
-            TR.position = Vector3.MoveTowards(TR.position, target, TT);
-            TR.Rotate(new Vector3(0, 0, 3),Space.Self);
-            TR.Rotate(new Vector3(0, 0, 2), Space.Self);
-            TR.Rotate(new Vector3(0, 0, 1), Space.Self);
+            yield return null; TT -= Time.deltaTime;
+            TR.position = Vector3.MoveTowards(TR.position, target, TT);//TR위치에서 target으로 TT 시간동안 이동
+            print("TR : "+TR.position+"/ TG : "+target);
             if (TR.position == target) break;
         }
+
         isBlockMoving = false;
     }
 
-    #endregion 블럭
+#endregion 블럭
 
     public bool Death()
     {
@@ -344,10 +399,10 @@ public class PolygonCommand : MonoBehaviour
         if (isNewRecord) NewRecordText.gameObject.SetActive(true);
     }
 
-    #endregion GameManger.Cs
+#endregion GameManger.Cs
 
 
-    #region BallScript.Cs
+#region BallScript.Cs
     [Header("BallScriptValue")]
     public Rigidbody2D RB;
     public bool isMoving;
@@ -488,6 +543,6 @@ public class PolygonCommand : MonoBehaviour
 
 
 
-    #endregion BallScript.Cs
+#endregion BallScript.Cs
 
 }
