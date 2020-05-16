@@ -21,6 +21,8 @@ using UnityEngine.SceneManagement;
     O.5 : ThresholdScript.cs 추가(한계선 충돌 내용 적용)
     S.2 : Main 화면 flex
     O.6 : 일시정지 화면 추가 및 발사 관련 일부 버그 수정
+    O.7 : 블럭 생성 위치 좌표 수정, 블럭 크기 및 모양 수정, P_Block 그룹화
+        10스테이지마다 튕기는 횟수 증가 기능 추가
 
 */
 #endregion
@@ -69,7 +71,8 @@ public class PolygonCommand : MonoBehaviour
     #region GameManger.Cs
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
-    public GameObject P_Ball, P_Item, P_Block, P_ParticleYellow;//프리팹들
+    public GameObject P_Ball, P_Item,  P_ParticleYellow;//프리팹들
+    public GameObject[] P_Block;
     public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel, MenuButtonGroup;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
@@ -86,7 +89,7 @@ public class PolygonCommand : MonoBehaviour
     int stage, timerCount, launchIndex;
     int shootPower=10000;//발사 속도
     float decrease = 0.95f;//감속 배율
-    int BounceCnt = 4,CurCnt;//튕기는 횟수
+    int BounceCnt = 10, CurCnt;//튕기는 횟수
     bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn,isPause=false;
     float timeDelay;
 
@@ -282,6 +285,9 @@ public class PolygonCommand : MonoBehaviour
     {
         print("BlockGenerator Start");
         StageText.text = "스테이지 " + (++stage).ToString();
+
+        if (stage % 10 == 0) BounceCnt++;
+
         if(PlayerPrefs.GetInt("BestStage",0) < stage)
         {
             PlayerPrefs.SetInt("BestStage", stage);
@@ -293,27 +299,39 @@ public class PolygonCommand : MonoBehaviour
 
         int count;
         int randBlock = Random.Range(0, 24);
-        if (stage <= 20) count = randBlock < 16 ? 3 : 4;
-        else if (stage <= 40) count = randBlock < 8 ? 3 : (randBlock < 16 ? 4 : 5);
-        else if (stage <= 80) count = randBlock < 8 ? 4 : (randBlock < 18 ? 5 : 6);
-        else if (stage <= 200) count = randBlock < 8 ? 5 : (randBlock < 20 ? 6 : 7);
+        if (stage <= 20) count = randBlock < 16 ? 2 : 3;
+        else if (stage <= 40) count = randBlock < 8 ? 2 : (randBlock < 16 ? 3 : 4);
+        else if (stage <= 80) count = randBlock < 8 ? 3 : (randBlock < 18 ? 4 : 5);
+        else if (stage <= 200) count = randBlock < 8 ? 4 : (randBlock < 20 ? 5 : 6);
         else count = randBlock < 10 ? 6 : (randBlock < 20 ? 7 : 8);
 
         List<Vector3> SpawnList = new List<Vector3>();
         //최대 한 번에 맵 밖에서 8개의 블럭이 나옴
         //6개는 위 아래로
         //수정 많이 필요!!!!!!!!!!!!!!
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -5+68, 0));
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(68 - i * 68, -5-68, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50 + (i * 50), i%2==0?45 :69, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50+(i*50), i%2==0?-55:-79, 0));
         //7개 이상 나오면 2개는 양 옆으로
         if (count>=7)
-            for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(68-i*136,-5,0));
+            for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(-63+i*189,-5,0));
 
         for(int i = 0; i < count; i++)
         {
             int rand = Random.Range(0, SpawnList.Count);
 
-            Transform TR = Instantiate(P_Block, SpawnList[rand], QI).transform;
+            //스테이지별 등장
+            Transform TR;
+            if (stage<=10)
+                TR = Instantiate(P_Block[0], SpawnList[rand], QI).transform;
+            else if(stage>10 && stage <=200){
+                randBlock = Random.Range(0, 3);
+                TR = Instantiate(randBlock<2?P_Block[0]:P_Block[1], SpawnList[rand], QI).transform;
+            }
+            else
+            {
+                randBlock = Random.Range(0, 6);
+                TR = Instantiate(randBlock<3?P_Block[0]:randBlock<5?P_Block[1]:P_Block[2], SpawnList[rand], QI).transform;
+            }
             TR.SetParent(BlockGroup);
             TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 10 ? 1 : stage / 10).ToString();
 
@@ -332,24 +350,25 @@ public class PolygonCommand : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
         Vector3 center=new Vector3(0,centerY,0);
         print("BlockMoveDown Start");
+        Vector3 target=TR.position;
+        if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-12,-12,0);//2시
+        else if (TR.position.x < 0 && TR.position.y > -5) target = TR.position + new Vector3(12, -12, 0);//11시
+        else if (TR.position.x == 0 && TR.position.y > -5) target = TR.position + new Vector3(0, -18, 0);//수직 위
+        else if (TR.position.x > 0 && TR.position.y < -5) target = TR.position + new Vector3(-12, 12, 0);//5시
+        else if (TR.position.x < 0 && TR.position.y < -5) target = TR.position + new Vector3(12, 12, 0);//7시
+        else if (TR.position.x == 0 && TR.position.y < -5) target = TR.position + new Vector3(0, 18, 0);//수직 아래
+        else if (TR.position.x > 0 && TR.position.y == -5) target = TR.position + new Vector3(-15, 0, 0);//오른쪽
+        else if (TR.position.x < 0 && TR.position.y == -5) target = TR.position + new Vector3(15, 0, 0);//왼쪽
+       
+        
         /*
-        if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-33,-20,0);
-        else if (TR.position.x < 0 && TR.position.y > -5) target = TR.position + new Vector3(33, -20, 0);
-        else if (TR.position.x == 0 && TR.position.y > -5) target = TR.position + new Vector3(0, -20, 0);
-        else if (TR.position.x > 0 && TR.position.y < -5) target = TR.position + new Vector3(-33, 20, 0);
-        else if (TR.position.x < 0 && TR.position.y < -5) target = TR.position + new Vector3(33, 20, 0);
-        else if (TR.position.x == 0 && TR.position.y < -5) target = TR.position + new Vector3(0, 20, 0);
-        else if (TR.position.x > 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
-        else if (TR.position.x < 0 && TR.position.y == -5) target = TR.position + new Vector3(-33, 0, 0);
-        Vector3 dir = (target - TR.position).magnitude;
-        */
-
+         *  Vector3 dir = (target - TR.position).magnitude;
         //블럭이 target 방향으로 회전하는 코드
         Vector3 dir = (TR.position-center);
         Vector3 target = new Vector3(dir.x, dir.y, dir.z);
         Quaternion angle = Quaternion.LookRotation(dir);
         //TR.rotation = Quaternion.Slerp(TR.rotation, angle, 0.1f);
-        
+        */
 
         float TT = 1.5f;
         while (true)
@@ -456,6 +475,7 @@ public class PolygonCommand : MonoBehaviour
                     if (transform.position == PC.veryFirstPos)
                     {
                         isMoving = false;
+                        PC.S_Plus.Play();
                         yield break;
                     }
                 }
@@ -507,6 +527,7 @@ public class PolygonCommand : MonoBehaviour
                     if (transform.position == PC.veryFirstPos)
                     {
                         isMoving = false;
+                        PC.S_Plus.Play();
                         yield break;
                     }
                 }

@@ -129,7 +129,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &23010647
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1618,9 +1618,12 @@ MonoBehaviour:
   centerY: -5
   P_Ball: {fileID: 546597955395953231, guid: a859e95308666d84e914557525b7e7d6, type: 3}
   P_Item: {fileID: 6597216900005133253, guid: 98c21c9c4480ca349a3080fe54362c1c, type: 3}
-  P_Block: {fileID: 124801436526765885, guid: c390a8ac5f7a2e94286e87b34a8c9662, type: 3}
   P_ParticleYellow: {fileID: 3245548513967020232, guid: 2b1fd1580a898fa478390538933fbf97,
     type: 3}
+  P_Block:
+  - {fileID: 124801436526765885, guid: c390a8ac5f7a2e94286e87b34a8c9662, type: 3}
+  - {fileID: 3851096469448467907, guid: 7866bd4b764ae804a976063ddb10280e, type: 3}
+  - {fileID: 1833550398181860083, guid: 2856aa3b7a5988a459a1f43147189a57, type: 3}
   BallPreview: {fileID: 2023435339}
   Arrow: {fileID: 624344171}
   GameOverPanel: {fileID: 2145329906}
