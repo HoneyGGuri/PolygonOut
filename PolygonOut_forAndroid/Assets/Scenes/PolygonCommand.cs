@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using GooglePlayGames;
 
 #region 업데이트 내역
 /*
@@ -34,12 +35,16 @@ public class PolygonCommand : MonoBehaviour
 
     void Start()
     {
+        PlayGamesPlatform.DebugLogEnabled = true;
+        PlayGamesPlatform.Activate();
         if (CompareTag("Ball")) Start_Ball();
     }
 
 
     void Update()
     {
+        if (Application.platform == RuntimePlatform.Android && Input.GetKeyDown(KeyCode.Escape))
+            isPause = !isPause;
         if (CompareTag("GameManager")) Update_GM();
     }
 
@@ -51,6 +56,11 @@ public class PolygonCommand : MonoBehaviour
     void FixedUpdate()
     {
         if (CompareTag("GameManager")) FixedUpdate_GM();
+    }
+
+    void OnApplicationQuit()
+    {
+        ((PlayGamesPlatform)Social.Active).SignOut();
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -71,9 +81,9 @@ public class PolygonCommand : MonoBehaviour
     #region GameManger.Cs
     [Header("GameManagerValue")]
     public float centerY = -5f;//시작점의 Y좌표
-    public GameObject P_Ball, P_Item,  P_ParticleYellow;//프리팹들
+    public GameObject P_Ball, P_Item, P_ParticleYellow;//프리팹들
     public GameObject[] P_Block;
-    public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel, MenuButtonGroup;
+    public GameObject BallPreview, Arrow, GameOverPanel, MainPanel, BallPowerTextObj, Threshold, PausePanel, MenuButtonGroup, HelpPanel, HelpTextGroup;
     public Transform ItemGroup, BlockGroup, BallGroup;//그룹들은 Transform
     public LineRenderer MouseLR, BallLR;
     public Text BestStageText, StageText, BallPowerText, FinalStageText, NewRecordText;
@@ -87,10 +97,10 @@ public class PolygonCommand : MonoBehaviour
 
     Vector3 firstPos, secondPos, gap;
     int stage, timerCount, launchIndex;
-    int shootPower=10000;//발사 속도
+    int shootPower = 10000;//발사 속도
     float decrease = 0.95f;//감속 배율
-    int BounceCnt = 10, CurCnt;//튕기는 횟수
-    bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn,isPause=false;
+    int BounceCnt, CurCnt;//튕기는 횟수
+    bool timerStart, isDie, isNewRecord, isBlockMoving, isReturn, isPause = false, onHelp = false;
     float timeDelay;
 
     #region 시작
@@ -114,19 +124,37 @@ public class PolygonCommand : MonoBehaviour
         cam.rect = rect;
 
         //시작
-       // BlockGenerator();
-        BestStageText.text = "최고기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+        // BlockGenerator();
+        if(Application.systemLanguage == SystemLanguage.Korean)
+            BestStageText.text = "최고기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+        else if(Application.systemLanguage==SystemLanguage.Japanese)
+            BestStageText.text = "최고~~기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+        else
+        {
+            BestStageText.text = "Best : " + PlayerPrefs.GetInt("BestStage").ToString();
+        }
     }
 
     public void on_start()
     {
+        Social.localUser.Authenticate((bool success) =>
+        {
+            if (success) print("로그인 Id : " + Social.localUser.id);
+            else print("실패");
+        });
+        BounceCnt = 10;
         MainPanel.SetActive(false);
         BlockGenerator();
     }
 
     //재시작버튼
     public void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    public void Pause() => isPause = !isPause;
+    public void Pause()
+    {
+        isPause = !isPause;
+        onHelp = false;
+    }
+    public void Help() => onHelp = !onHelp;
     public void Quit()
     {
 #if UNITY_EDITOR
@@ -155,14 +183,9 @@ public class PolygonCommand : MonoBehaviour
     {
         
     }
-
-    public void OnApplicationQuit()
-    {
-        
-    }
+    
     bool NowPlaying()
     {
-        print(PausePanel.activeSelf + " / " + MainPanel.activeSelf);
         if (PausePanel.activeSelf == false && MainPanel.activeSelf == false)
             return true;
         else return false;
@@ -171,7 +194,7 @@ public class PolygonCommand : MonoBehaviour
     {
         if (isDie) return;
 
-        if (isPause)
+        if (isPause && !onHelp)
         {
             BallPowerTextObj.SetActive(false);
             BestStageText.gameObject.SetActive(false);
@@ -179,6 +202,14 @@ public class PolygonCommand : MonoBehaviour
             PausePanel.SetActive(true);
             MenuButtonGroup.SetActive(true);
             Time.timeScale = 0f;
+        }
+        else if(isPause && onHelp)
+        {
+            Time.timeScale = 0f;
+            HelpPanel.SetActive(true);
+            HelpTextGroup.SetActive(true);
+            MenuButtonGroup.SetActive(false);
+
         }
         else
         {
@@ -188,16 +219,16 @@ public class PolygonCommand : MonoBehaviour
             StageText.gameObject.SetActive(true);
             MenuButtonGroup.SetActive(false);
             PausePanel.SetActive(false);
+            HelpPanel.SetActive(false);
+            HelpTextGroup.SetActive(false);
         }
-
+        
         VeryFirstPosSet(new Vector3(0, -5f, 0));
 
         if (Input.GetMouseButtonDown(0) && NowPlaying())
         {//처음 터치했을 때 위치 계산
             print("First Input : " + Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            
             firstPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);//카메라 고려해서 Z+10
-
         }
         
         //공들이 움직이고 있다면 움직일 수 없다.
@@ -207,7 +238,16 @@ public class PolygonCommand : MonoBehaviour
         if (isBlockMoving) shotable = false;
 
         //움직이는 중이면 Update_GM 실행 불가
-        if (!shotable) return;
+        if (!shotable)
+        {
+            if (Input.GetMouseButton(0))
+            {
+                if (stage < 100) Time.timeScale = 3f;
+                else Time.timeScale = 5;
+            }
+            else Time.timeScale = 1f;
+            return;
+        }
         
         
         if(shotTrigger)
@@ -278,20 +318,23 @@ public class PolygonCommand : MonoBehaviour
 
     }
 
-#endregion 시작
 
-#region 블럭
+    #region 블럭
     void BlockGenerator()
     {
         print("BlockGenerator Start");
         StageText.text = "스테이지 " + (++stage).ToString();
 
-        if (stage % 10 == 0) BounceCnt++;
+        if (stage % 10 == 0 && stage<=100) BounceCnt += 2;
+        else if(stage % 10 ==0 && stage>100) BounceCnt += 3;
+        BallPowerText.text = "x" + BounceCnt.ToString();
 
         if(PlayerPrefs.GetInt("BestStage",0) < stage)
         {
             PlayerPrefs.SetInt("BestStage", stage);
-            BestStageText.text = "최고기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+            if (Application.systemLanguage == SystemLanguage.Korean)
+                BestStageText.text = "최고기록 : " + PlayerPrefs.GetInt("BestStage").ToString();
+            else BestStageText.text = "Best : " + PlayerPrefs.GetInt("BestStage").ToString();
             BestStageText.color = greenColor;
             isNewRecord = true;
 
@@ -299,10 +342,10 @@ public class PolygonCommand : MonoBehaviour
 
         int count;
         int randBlock = Random.Range(0, 24);
-        if (stage <= 20) count = randBlock < 16 ? 2 : 3;
-        else if (stage <= 40) count = randBlock < 8 ? 2 : (randBlock < 16 ? 3 : 4);
-        else if (stage <= 80) count = randBlock < 8 ? 3 : (randBlock < 18 ? 4 : 5);
-        else if (stage <= 200) count = randBlock < 8 ? 4 : (randBlock < 20 ? 5 : 6);
+        if (stage < 5) count = randBlock < 16 ? 2 : 3;
+        else if (stage < 60) count = randBlock < 8 ? 2 : (randBlock < 16 ? 3 : 4);
+        else if (stage < 120) count = randBlock < 8 ? 3 : (randBlock < 18 ? 4 : 5);
+        else if (stage < 270) count = randBlock < 8 ? 4 : (randBlock < 20 ? 5 : 6);
         else count = randBlock < 10 ? 6 : (randBlock < 20 ? 7 : 8);
 
         List<Vector3> SpawnList = new List<Vector3>();
@@ -319,25 +362,49 @@ public class PolygonCommand : MonoBehaviour
         {
             int rand = Random.Range(0, SpawnList.Count);
 
-            //스테이지별 등장
+            //스테이지별 블럭 등장
             Transform TR;
-            if (stage<=10)
+            
+            if (stage<10)
                 TR = Instantiate(P_Block[0], SpawnList[rand], QI).transform;
-            else if(stage>10 && stage <=200){
+            else if(stage>=10 && stage <40){
                 randBlock = Random.Range(0, 3);
                 TR = Instantiate(randBlock<2?P_Block[0]:P_Block[1], SpawnList[rand], QI).transform;
             }
+            else if(stage>=40 && stage<80){
+                randBlock = Random.Range(0, 5);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 4 ? P_Block[1] : P_Block[2], SpawnList[rand], QI).transform;
+            }
+            else if(stage>=80 && stage < 150)
+            {
+                randBlock = Random.Range(0, 10);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8? P_Block[2] : P_Block[3], SpawnList[rand], QI).transform;
+            }
+            else if(stage>=150 && stage < 300)
+            {
+                randBlock = Random.Range(0, 12);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock<10? P_Block[3] : P_Block[4], SpawnList[rand], QI).transform;
+            }
             else
             {
-                randBlock = Random.Range(0, 6);
-                TR = Instantiate(randBlock<3?P_Block[0]:randBlock<5?P_Block[1]:P_Block[2], SpawnList[rand], QI).transform;
+                randBlock = Random.Range(0, 14);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock < 10 ? P_Block[3] : randBlock < 12? P_Block[4] : P_Block[5], SpawnList[rand], QI).transform;
             }
             TR.SetParent(BlockGroup);
-            TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 10 ? 1 : stage / 10).ToString();
+            //블록 체력 부분
+            int rand_2 = Random.Range(0,10);
+            TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 20 ? (1) : (stage < 50 ? (rand_2 < 6 ? 1 : 2) : (rand_2 < 5 ? (stage / 25) - 1 : (rand_2 < 8 ? (stage / 25)  : (stage / 25)+1)))).ToString();
+            /*
+             * ~19 : 1
+             * 20~49 : 1,2 (6:4 비율)
+             * 50~ : 1,2,3 (5:3:2 비율)/ 25스테이지마다 +1
+             * 
+             */
+           
 
             SpawnList.RemoveAt(rand);
         }
-        Instantiate(P_Item, SpawnList[Random.Range(0, SpawnList.Count)], QI).transform.SetParent(BlockGroup);
+        //Instantiate(P_Item, SpawnList[Random.Range(0, SpawnList.Count)], QI).transform.SetParent(BlockGroup);
         isBlockMoving = true;
         print("Call MoveDown");
         for (int i = 0; i < BlockGroup.childCount; i++) StartCoroutine(BlockMoveDown(BlockGroup.GetChild(i)));
@@ -375,14 +442,14 @@ public class PolygonCommand : MonoBehaviour
         {
             yield return null; TT -= Time.deltaTime;
             TR.position = Vector3.MoveTowards(TR.position, target, TT);//TR위치에서 target으로 TT 시간동안 이동
-            print("TR : "+TR.position+"/ TG : "+target);
             if (TR.position == target) break;
         }
 
         isBlockMoving = false;
     }
+    #endregion 시작
 
-#endregion 블럭
+    #endregion 블럭
 
     public bool Death()
     {
@@ -418,10 +485,12 @@ public class PolygonCommand : MonoBehaviour
         if (isNewRecord) NewRecordText.gameObject.SetActive(true);
     }
 
-#endregion GameManger.Cs
 
 
-#region BallScript.Cs
+    #endregion GameManger.Cs
+
+
+    #region BallScript.Cs
     [Header("BallScriptValue")]
     public Rigidbody2D RB;
     public bool isMoving;
@@ -434,10 +503,10 @@ public class PolygonCommand : MonoBehaviour
     {
         if (pos.x + pos.y + pos.z == 0) return;
         isReturn = false;
-        CurCnt = BounceCnt;
+        CurCnt = PC.BounceCnt;
         PC.shotTrigger = true;
         isMoving = true;
-        print("pos :" +pos.x+" / "+pos.y + " / " +pos.z);
+        print("CurCnt = "+CurCnt+" // BounceCnt :" +BounceCnt);
         RB.AddForce(pos * shootPower);
     }
 
@@ -453,7 +522,9 @@ public class PolygonCommand : MonoBehaviour
             CurCnt--;
             if (CurCnt >= 0) BallPowerText.text = "x" + CurCnt.ToString();
             else BallPowerText.text = "x0";
-            print("vel = " + RB.velocity.x + " / " + RB.velocity.y + " | CurCnt = " + CurCnt);
+
+            if (PC.BlockGroup.childCount == 0 && PC.ItemGroup.childCount == 0) CurCnt = 0;
+
             //너무 일찍 가속도가 내려가면 보정
             if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 70 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
             RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
@@ -493,6 +564,8 @@ public class PolygonCommand : MonoBehaviour
             Text BlockText = Col.transform.GetChild(0).GetComponentInChildren<Text>();
             int blockValue = int.Parse(BlockText.text) - 1;
 
+
+
             for(int i = 0; i < PC.S_Block.Length; i++)
             {
                 if ( PC.S_Block[i].isPlaying) continue;
@@ -509,6 +582,9 @@ public class PolygonCommand : MonoBehaviour
                 Destroy(Col);
                 Destroy(Instantiate(PC.P_ParticleYellow, collision.transform.position, QI), 1);
             }
+
+            if (PC.BlockGroup.childCount == 0 && PC.ItemGroup.childCount == 0) CurCnt = 0;
+
 
             if (CurCnt <= 0)
             {

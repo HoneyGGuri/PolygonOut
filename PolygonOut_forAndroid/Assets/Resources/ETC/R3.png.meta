@@ -3,6 +3,8 @@ guid: 21fdb7f831687fb44b022bfdbb11d2cb
 TextureImporter:
   fileIDToRecycleName:
     21300000: R3_0
+    21300002: R3_1
+    21300004: R3_2
   externalObjects: {}
   serializedVersion: 9
   mipmaps:
@@ -110,8 +112,8 @@ TextureImporter:
       name: R3_0
       rect:
         serializedVersion: 2
-        x: 16
-        y: 11
+        x: 21
+        y: 17
         width: 487
         height: 489
       alignment: 0
@@ -121,7 +123,47 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 71bc01e31ad23a448900ca06b758ce9a
+      spriteID: eb32edb9dd95fdc49a634839e790794f
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: R3_1
+      rect:
+        serializedVersion: 2
+        x: 542
+        y: 48
+        width: 494
+        height: 428
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a75dda0c41db7b54f8166696a2e677a0
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: R3_2
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 24
+        width: 476
+        height: 476
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d951e67474b34d4d88ca681958e225a
       vertices: []
       indices: 
       edges: []

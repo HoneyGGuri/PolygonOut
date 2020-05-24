@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 546597955395953231}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 1}
   m_Children:
   - {fileID: 7867461381137411278}
   m_Father: {fileID: 0}
@@ -240,13 +240,18 @@ MonoBehaviour:
   centerY: -5
   P_Ball: {fileID: 0}
   P_Item: {fileID: 0}
-  P_Block: {fileID: 0}
   P_ParticleYellow: {fileID: 0}
+  P_Block: []
   BallPreview: {fileID: 0}
   Arrow: {fileID: 0}
   GameOverPanel: {fileID: 0}
+  MainPanel: {fileID: 0}
   BallPowerTextObj: {fileID: 0}
   Threshold: {fileID: 0}
+  PausePanel: {fileID: 0}
+  MenuButtonGroup: {fileID: 0}
+  HelpPanel: {fileID: 0}
+  HelpTextGroup: {fileID: 0}
   ItemGroup: {fileID: 0}
   BlockGroup: {fileID: 0}
   BallGroup: {fileID: 0}

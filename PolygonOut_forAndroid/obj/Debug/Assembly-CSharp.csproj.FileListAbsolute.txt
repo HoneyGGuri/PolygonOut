@@ -1,0 +1,2 @@
+D:\Unity\PolygonOut\PolygonOut_forAndroid\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
+D:\Unity\PolygonOut\PolygonOut_forAndroid\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
