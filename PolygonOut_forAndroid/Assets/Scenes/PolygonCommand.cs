@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using GooglePlayGames;
+//using GooglePlayGames;
 
 #region 업데이트 내역
 /*
@@ -34,9 +34,10 @@ public class PolygonCommand : MonoBehaviour
 
 
     void Start()
-    {
+    {   /*
         PlayGamesPlatform.DebugLogEnabled = true;
         PlayGamesPlatform.Activate();
+        */
         if (CompareTag("Ball")) Start_Ball();
     }
 
@@ -60,7 +61,7 @@ public class PolygonCommand : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        ((PlayGamesPlatform)Social.Active).SignOut();
+        //((PlayGamesPlatform)Social.Active).SignOut();
     }
 
     void OnCollisionEnter2D(Collision2D collision)
