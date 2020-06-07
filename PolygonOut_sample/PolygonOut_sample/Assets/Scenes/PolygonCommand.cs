@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-//using GooglePlayGames;
+using GooglePlayGames;
+using System;
 
 #region 업데이트 내역
 /*
@@ -34,18 +35,25 @@ public class PolygonCommand : MonoBehaviour
 
 
     void Start()
-    {   /*
+    {
         PlayGamesPlatform.DebugLogEnabled = true;
         PlayGamesPlatform.Activate();
-        */
+        //string appID = "ca-app-pub-7892496777251961~6772352057";
+
+
+        //MobileAds.Initialize(appID);
+        //RequestBanner();
         if (CompareTag("Ball")) Start_Ball();
     }
 
 
     void Update()
     {
-        if (Application.platform == RuntimePlatform.Android && Input.GetKeyDown(KeyCode.Escape))
+        if (Application.platform == RuntimePlatform.Android && Input.GetKeyDown(KeyCode.Escape) && shotable)
+        {
             isPause = !isPause;
+            if (onHelp) onHelp = false;
+        }
         if (CompareTag("GameManager")) Update_GM();
     }
 
@@ -61,7 +69,7 @@ public class PolygonCommand : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        //((PlayGamesPlatform)Social.Active).SignOut();
+        ((PlayGamesPlatform)Social.Active).SignOut();
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -76,11 +84,79 @@ public class PolygonCommand : MonoBehaviour
     }
     #endregion 태그에 따른 호출
 
+    /*
+    #region 광고
+    private void RequestBanner()
+    {
+#if UNITY_ANDROID
+        string adID = "ca-app-pub-7892496777251961/6856112533";
+#else
+        string adID="unDefined";
+#endif
+
+        
+        banner = new BannerView(adID, AdSize.SmartBanner, AdPosition.Bottom);
+        /*
+        // Called when an ad request has successfully loaded.
+        banner.OnAdLoaded += HandleOnAdLoaded_banner;
+        // Called when an ad request failed to load.
+        banner.OnAdFailedToLoad += HandleOnAdFailedToLoad_banner;
+        // Called when an ad is clicked.
+        banner.OnAdOpening += HandleOnAdOpened_banner;
+        // Called when the user returned from the app after an ad click.
+        banner.OnAdClosed += HandleOnAdClosed_banner;
+        // Called when the ad click caused the user to leave the application.
+        banner.OnAdLeavingApplication += HandleOnAdLeavingApplication_banner;
+        // 
+        
+        AdRequest request = new AdRequest.Builder().Build();
+
+        banner.LoadAd(request);
 
 
+    }
+
+    public void ShowBanner()
+    {
+        banner.Show();
+    }
+
+    public void HideBanner()
+    {
+        banner.Hide();
+    }
+
+    public void HandleOnAdLoaded_banner(object sender, EventArgs args)
+    {
+        MonoBehaviour.print("HandleAdLoaded event received_banner");
+    }
+
+    public void HandleOnAdFailedToLoad_banner(object sender, AdFailedToLoadEventArgs args)
+    {
+        MonoBehaviour.print("HandleFailedToReceiveAd_banner event received with message: "
+                            + args.Message);
+    }
+
+    public void HandleOnAdOpened_banner(object sender, EventArgs args)
+    {
+        MonoBehaviour.print("HandleAdOpened event received_banner");
+    }
+
+    public void HandleOnAdClosed_banner(object sender, EventArgs args)
+    {
+        MonoBehaviour.print("HandleAdClosed event received_banner");
+    }
+
+    public void HandleOnAdLeavingApplication_banner(object sender, EventArgs args)
+    {
+        MonoBehaviour.print("HandleAdLeavingApplication event received_banner");
+    }
+    #endregion 광고
+    */
 
     #region GameManger.Cs
     [Header("GameManagerValue")]
+    //private BannerView banner;
     public float centerY = -5f;//시작점의 Y좌표
     public GameObject P_Ball, P_Item, P_ParticleYellow;//프리팹들
     public GameObject[] P_Block;
@@ -135,21 +211,26 @@ public class PolygonCommand : MonoBehaviour
     {
         Social.localUser.Authenticate((bool success) =>
         {
-            if (success) print("로그인 Id : " + Social.localUser.id);
+            if (success)
+            {
+                Social.ReportProgress(GPGSIds.achievement_login, 100, (bool suc) => { });
+                print("로그인 Id : " + Social.localUser.id);
+            }
             else print("실패");
         });
         BounceCnt = 10;
         MainPanel.SetActive(false);
         BlockGenerator();
     }
-
+    public void AHCV() => Social.ShowAchievementsUI();
     //재시작버튼
     public void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     public void Pause()
     {
-        if(shotable){ 
-        isPause = !isPause;
-        onHelp = false;
+        if (shotable)
+        {
+            isPause = !isPause;
+            onHelp = false;
         }
     }
     public void Help() => onHelp = !onHelp;
@@ -169,7 +250,7 @@ public class PolygonCommand : MonoBehaviour
     {
         if (pause)
         {
-            Pause();
+            if (shotable) isPause = true;
         }
         else
         {
@@ -179,9 +260,9 @@ public class PolygonCommand : MonoBehaviour
 
     public void OnApplicationFocus(bool focus)
     {
-        
+
     }
-    
+
     bool NowPlaying()
     {
         if (PausePanel.activeSelf == false && MainPanel.activeSelf == false)
@@ -201,7 +282,7 @@ public class PolygonCommand : MonoBehaviour
             MenuButtonGroup.SetActive(true);
             Time.timeScale = 0f;
         }
-        else if(isPause && onHelp)
+        else if (isPause && onHelp)
         {
             Time.timeScale = 0f;
             HelpPanel.SetActive(true);
@@ -220,7 +301,18 @@ public class PolygonCommand : MonoBehaviour
             HelpPanel.SetActive(false);
             HelpTextGroup.SetActive(false);
         }
-        
+
+        /* 업적 부분 */
+        //
+        if (stage >= 10) Social.ReportProgress(GPGSIds.achievement_diamond, 100, (bool success) => { });
+        if (stage >= 100) Social.ReportProgress(GPGSIds.achievement_100_clear, 100, (bool success) => { });
+        if (stage >= 300) Social.ReportProgress(GPGSIds.achievement_300_clear, 100, (bool success) => { });
+        if (stage >= 600) Social.ReportProgress(GPGSIds.achievement_600_clear, 100, (bool success) => { });
+        if (stage >= 1000) Social.ReportProgress(GPGSIds.achievement__1000_clear, 100, (bool success) => { });
+
+        //
+
+
         VeryFirstPosSet(new Vector3(0, -5f, 0));
 
         if (Input.GetMouseButtonDown(0) && NowPlaying())
@@ -228,7 +320,7 @@ public class PolygonCommand : MonoBehaviour
             print("First Input : " + Camera.main.ScreenToWorldPoint(Input.mousePosition));
             firstPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);//카메라 고려해서 Z+10
         }
-        
+
         //공들이 움직이고 있다면 움직일 수 없다.
         shotable = true;
         for (int i = 0; i < BallGroup.childCount; i++)
@@ -238,20 +330,20 @@ public class PolygonCommand : MonoBehaviour
         //움직이는 중이면 Update_GM 실행 불가
         if (!shotable)
         {
-            
+
             if (Input.GetMouseButton(0))
             {
-                if (stage < 100) Time.timeScale = 3f;
-                else Time.timeScale = 5;
+                if (stage < 100) Time.timeScale = 3.5f;
+                else Time.timeScale = 6f;
             }
             else Time.timeScale = 1f;
             return;
         }
-        
-        
-        if(shotTrigger)
+
+
+        if (shotTrigger)
         {
-            BallPowerText.text = "x"+BounceCnt.ToString();
+            BallPowerText.text = "x" + BounceCnt.ToString();
             shotTrigger = false;
             BlockGenerator();
             timeDelay = 0;
@@ -260,9 +352,9 @@ public class PolygonCommand : MonoBehaviour
         if (timeDelay < 0.5f) return;//버그 방지용 딜레이
 
         bool isMouse = Input.GetMouseButton(0);
-        if(isMouse && NowPlaying() && firstPos.y<64)//만약 계속 터치 중이면
+        if (isMouse && NowPlaying() && firstPos.y < 64)//만약 계속 터치 중이면
         {
-            secondPos =Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
+            secondPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
             if ((secondPos - firstPos).magnitude < 3) return;//너무 가까우면(선을 그리기 작다면)
             gap = (secondPos - firstPos).normalized;
             //미리보기
@@ -283,7 +375,7 @@ public class PolygonCommand : MonoBehaviour
         BallPreview.SetActive(isMouse && NowPlaying() && firstPos.y < 64);
         Arrow.SetActive(isMouse && NowPlaying() && firstPos.y < 64);
 
-        if (Input.GetMouseButtonUp(0) && firstPos.y<64)
+        if (Input.GetMouseButtonUp(0) && firstPos.y < 64)
         {//라인 지우기
             secondPos = Camera.main.ScreenToWorldPoint(Input.mousePosition) + new Vector3(0, 0, 10);
             MouseLR.SetPosition(0, Vector3.zero);
@@ -294,14 +386,14 @@ public class PolygonCommand : MonoBehaviour
             timerStart = true;
 
             //veryFirstPos
-           
-            
+
+
         }
     }
     void FixedUpdate_GM()
     {
         //아이템 먹어서 공이 여러 개면 일정 시간마다 발사
-        if(timerStart && ++timerCount == 3)
+        if (timerStart && ++timerCount == 3)
         {
             timerCount = 0;
             print(firstPos + " / " + secondPos);
@@ -324,11 +416,11 @@ public class PolygonCommand : MonoBehaviour
         print("BlockGenerator Start");
         StageText.text = "Stage " + (++stage).ToString();
 
-        if (stage % 10 == 0 && stage<=100) BounceCnt += 2;
-        else if(stage % 10 ==0 && stage>100) BounceCnt += 3;
+        if (stage % 10 == 0 && stage <= 100) BounceCnt += 2;
+        else if (stage % 10 == 0 && stage > 100) BounceCnt += 3;
         BallPowerText.text = "x" + BounceCnt.ToString();
 
-        if(PlayerPrefs.GetInt("BestStage",0) < stage)
+        if (PlayerPrefs.GetInt("BestStage", 0) < stage)
         {
             PlayerPrefs.SetInt("BestStage", stage);
             BestStageText.text = "Best : " + PlayerPrefs.GetInt("BestStage").ToString();
@@ -338,7 +430,7 @@ public class PolygonCommand : MonoBehaviour
         }
 
         int count;
-        int randBlock = Random.Range(0, 24);
+        int randBlock = UnityEngine.Random.Range(0, 24);
         if (stage < 5) count = randBlock < 16 ? 2 : 3;
         else if (stage < 60) count = randBlock < 8 ? 2 : (randBlock < 16 ? 3 : 4);
         else if (stage < 120) count = randBlock < 8 ? 3 : (randBlock < 18 ? 4 : 5);
@@ -349,55 +441,57 @@ public class PolygonCommand : MonoBehaviour
         //최대 한 번에 맵 밖에서 8개의 블럭이 나옴
         //6개는 위 아래로
         //수정 많이 필요!!!!!!!!!!!!!!
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50 + (i * 50), i%2==0?45 :69, 0));
-        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50+(i*50), i%2==0?-55:-79, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50 + (i * 50), i % 2 == 0 ? 45 : 69, 0));
+        for (int i = 0; i < 3; i++) SpawnList.Add(new Vector3(-50 + (i * 50), i % 2 == 0 ? -55 : -79, 0));
         //7개 이상 나오면 2개는 양 옆으로
-        if (count>=7)
-            for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(-63+i*189,-5,0));
+        if (count >= 7)
+            for (int i = 0; i < 2; i++) SpawnList.Add(new Vector3(-63 + i * 189, -5, 0));
 
-        for(int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
-            int rand = Random.Range(0, SpawnList.Count);
+            int rand = UnityEngine.Random.Range(0, SpawnList.Count);
 
             //스테이지별 블럭 등장
             Transform TR;
-            
-            if (stage<10)
+
+            if (stage < 10)
                 TR = Instantiate(P_Block[0], SpawnList[rand], QI).transform;
-            else if(stage>=10 && stage <40){
-                randBlock = Random.Range(0, 3);
-                TR = Instantiate(randBlock<2?P_Block[0]:P_Block[1], SpawnList[rand], QI).transform;
+            else if (stage >= 10 && stage < 40)
+            {
+                randBlock = UnityEngine.Random.Range(0, 3);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : P_Block[1], SpawnList[rand], QI).transform;
             }
-            else if(stage>=40 && stage<80){
-                randBlock = Random.Range(0, 5);
+            else if (stage >= 40 && stage < 80)
+            {
+                randBlock = UnityEngine.Random.Range(0, 5);
                 TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 4 ? P_Block[1] : P_Block[2], SpawnList[rand], QI).transform;
             }
-            else if(stage>=80 && stage < 150)
+            else if (stage >= 80 && stage < 150)
             {
-                randBlock = Random.Range(0, 10);
-                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8? P_Block[2] : P_Block[3], SpawnList[rand], QI).transform;
+                randBlock = UnityEngine.Random.Range(0, 10);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : P_Block[3], SpawnList[rand], QI).transform;
             }
-            else if(stage>=150 && stage < 300)
+            else if (stage >= 150 && stage < 300)
             {
-                randBlock = Random.Range(0, 12);
-                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock<10? P_Block[3] : P_Block[4], SpawnList[rand], QI).transform;
+                randBlock = UnityEngine.Random.Range(0, 12);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock < 10 ? P_Block[3] : P_Block[4], SpawnList[rand], QI).transform;
             }
             else
             {
-                randBlock = Random.Range(0, 14);
-                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock < 10 ? P_Block[3] : randBlock < 12? P_Block[4] : P_Block[5], SpawnList[rand], QI).transform;
+                randBlock = UnityEngine.Random.Range(0, 14);
+                TR = Instantiate(randBlock < 2 ? P_Block[0] : randBlock < 5 ? P_Block[1] : randBlock < 8 ? P_Block[2] : randBlock < 10 ? P_Block[3] : randBlock < 12 ? P_Block[4] : P_Block[5], SpawnList[rand], QI).transform;
             }
             TR.SetParent(BlockGroup);
             //블록 체력 부분
-            int rand_2 = Random.Range(0,10);
-            TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 20 ? (1) : (stage < 50 ? (rand_2 < 6 ? 1 : 2) : (rand_2 < 5 ? (stage / 25) - 1 : (rand_2 < 8 ? (stage / 25)  : (stage / 25)+1)))).ToString();
+            int rand_2 = UnityEngine.Random.Range(0, 10);
+            TR.GetChild(0).GetComponentInChildren<Text>().text = (stage < 20 ? (1) : (stage < 50 ? (rand_2 < 6 ? 1 : 2) : (rand_2 < 5 ? (stage / 25) - 1 : (rand_2 < 8 ? (stage / 25) : (stage / 25) + 1)))).ToString();
             /*
              * ~19 : 1
              * 20~49 : 1,2 (6:4 비율)
              * 50~ : 1,2,3 (5:3:2 비율)/ 25스테이지마다 +1
              * 
              */
-           
+
 
             SpawnList.RemoveAt(rand);
         }
@@ -406,16 +500,16 @@ public class PolygonCommand : MonoBehaviour
         print("Call MoveDown");
         for (int i = 0; i < BlockGroup.childCount; i++) StartCoroutine(BlockMoveDown(BlockGroup.GetChild(i)));
 
-        
+
     }
 
     IEnumerator BlockMoveDown(Transform TR)
     {//수정 많이 필요!!!!!!!!!!!!!!
         yield return new WaitForSeconds(0.2f);
-        Vector3 center=new Vector3(0,centerY,0);
+        Vector3 center = new Vector3(0, centerY, 0);
         print("BlockMoveDown Start");
-        Vector3 target=TR.position;
-        if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-12,-12,0);//2시
+        Vector3 target = TR.position;
+        if (TR.position.x > 0 && TR.position.y > -5) target = TR.position + new Vector3(-12, -12, 0);//2시
         else if (TR.position.x < 0 && TR.position.y > -5) target = TR.position + new Vector3(12, -12, 0);//11시
         else if (TR.position.x == 0 && TR.position.y > -5) target = TR.position + new Vector3(0, -18, 0);//수직 위
         else if (TR.position.x > 0 && TR.position.y < -5) target = TR.position + new Vector3(-12, 12, 0);//5시
@@ -423,8 +517,8 @@ public class PolygonCommand : MonoBehaviour
         else if (TR.position.x == 0 && TR.position.y < -5) target = TR.position + new Vector3(0, 18, 0);//수직 아래
         else if (TR.position.x > 0 && TR.position.y == -5) target = TR.position + new Vector3(-15, 0, 0);//오른쪽
         else if (TR.position.x < 0 && TR.position.y == -5) target = TR.position + new Vector3(15, 0, 0);//왼쪽
-       
-        
+
+
         /*
          *  Vector3 dir = (target - TR.position).magnitude;
         //블럭이 target 방향으로 회전하는 코드
@@ -460,15 +554,17 @@ public class PolygonCommand : MonoBehaviour
             Destroy(BallGroup.GetChild(i).gameObject);
         Destroy(Instantiate(P_ParticleYellow, veryFirstPos, QI), 1);
 
+
+
         BallPowerTextObj.SetActive(false);
         BestStageText.gameObject.SetActive(false);
         StageText.gameObject.SetActive(false);
 
-        
+
         Camera.main.GetComponent<Animator>().SetTrigger("closeup");
         S_GameOver.Play();
 
-        Invoke("PanelOn",1);
+        Invoke("PanelOn", 1);
 
 
         return;
@@ -478,7 +574,7 @@ public class PolygonCommand : MonoBehaviour
     {
         print("here");
         GameOverPanel.SetActive(true);
-        FinalStageText.text = stage.ToString()+ " Stage Clear!";
+        FinalStageText.text = stage.ToString() + " Stage Clear!";
         if (isNewRecord) NewRecordText.gameObject.SetActive(true);
     }
 
@@ -495,7 +591,7 @@ public class PolygonCommand : MonoBehaviour
     PolygonCommand PC;
 
     void Start_Ball() => PC = GameObject.FindWithTag("GameManager").GetComponent<PolygonCommand>();
-    
+
 
     public void Launch(Vector3 pos)
     {
@@ -504,7 +600,6 @@ public class PolygonCommand : MonoBehaviour
         CurCnt = PC.BounceCnt;
         PC.shotTrigger = true;
         isMoving = true;
-        print("CurCnt = "+CurCnt+" // BounceCnt :" +BounceCnt);
         RB.AddForce(pos * shootPower);
     }
 
@@ -513,7 +608,7 @@ public class PolygonCommand : MonoBehaviour
     {
         Physics2D.IgnoreLayerCollision(2, 2);
         GameObject Col = collision.gameObject;
-        
+
         //벽만? 블럭도?
         if (Col.CompareTag("Wall"))
         {
@@ -524,13 +619,13 @@ public class PolygonCommand : MonoBehaviour
             if (PC.BlockGroup.childCount == 0 && PC.ItemGroup.childCount == 0) CurCnt = 0;
 
             //너무 일찍 가속도가 내려가면 보정
-            if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 70 && CurCnt>BounceCnt/2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
+            if (Mathf.Abs(RB.velocity.x) + Mathf.Abs(RB.velocity.y) < 70 && CurCnt > BounceCnt / 2) RB.velocity = new Vector2(RB.velocity.x * 2, RB.velocity.y * 2);
             RB.velocity = new Vector2(RB.velocity.x * decrease, RB.velocity.y * decrease);
 
             if (CurCnt <= 0)
             {
                 isReturn = true;
-                RB.velocity=new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
+                RB.velocity = new Vector2(RB.velocity.x * 0.2f, RB.velocity.y * 0.2f);
                 yield return new WaitForSeconds(0.3f);
                 RB.velocity = Vector2.zero;
                 yield return new WaitForSeconds(1f);
@@ -548,13 +643,13 @@ public class PolygonCommand : MonoBehaviour
                         yield break;
                     }
                 }
-                
+
             }
-            
+
         }
-        
+
         // 블럭충돌시 블럭숫자 1씩 줄어들다 0이되면 부숨
-        if(Col.CompareTag("Block") && isReturn==false)
+        if (Col.CompareTag("Block") && isReturn == false)
         {
             CurCnt--;
             if (CurCnt >= 0) BallPowerText.text = "x" + CurCnt.ToString();
@@ -564,13 +659,13 @@ public class PolygonCommand : MonoBehaviour
 
 
 
-            for(int i = 0; i < PC.S_Block.Length; i++)
+            for (int i = 0; i < PC.S_Block.Length; i++)
             {
-                if ( PC.S_Block[i].isPlaying) continue;
+                if (PC.S_Block[i].isPlaying) continue;
                 else { PC.S_Block[i].Play(); break; }
             }
 
-            if(blockValue > 0)
+            if (blockValue > 0)
             {
                 BlockText.text = blockValue.ToString();
                 Col.GetComponent<Animator>().SetTrigger("Shock");
@@ -613,7 +708,7 @@ public class PolygonCommand : MonoBehaviour
     IEnumerator OnTriggerEnter2D_Ball(Collider2D collision)
     {
         //아이템과 공이 충돌시 스크립트를 작성해야함
-        if (collision.gameObject.CompareTag("Item") && isReturn==false)
+        if (collision.gameObject.CompareTag("Item") && isReturn == false)
         {
             Destroy(collision.gameObject);
             //파티클 바꿔야함(지금 블럭용)
@@ -638,6 +733,6 @@ public class PolygonCommand : MonoBehaviour
 
 
 
-#endregion BallScript.Cs
+    #endregion BallScript.Cs
 
 }
