@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-//using GooglePlayGames;
+using GooglePlayGames;
 
 #region 업데이트 내역
 /*
@@ -34,10 +34,10 @@ public class PolygonCommand : MonoBehaviour
 
 
     void Start()
-    {   /*
+    {   
         PlayGamesPlatform.DebugLogEnabled = true;
         PlayGamesPlatform.Activate();
-        */
+        
         if (CompareTag("Ball")) Start_Ball();
     }
 
@@ -135,21 +135,26 @@ public class PolygonCommand : MonoBehaviour
     {
         Social.localUser.Authenticate((bool success) =>
         {
-            if (success) print("로그인 Id : " + Social.localUser.id);
+            if (success)
+            {
+                Social.ReportProgress(GPGSIds.achievement_login, 100, (bool suc) => { });
+                print("로그인 Id : " + Social.localUser.id);
+            }
             else print("실패");
         });
         BounceCnt = 10;
         MainPanel.SetActive(false);
         BlockGenerator();
     }
+    public void AHCV() => Social.ShowAchievementsUI();
 
     //재시작버튼
     public void Restart() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     public void Pause()
     {
         if(shotable){ 
-        isPause = !isPause;
-        onHelp = false;
+            isPause = !isPause;
+            onHelp = false;
         }
     }
     public void Help() => onHelp = !onHelp;
@@ -220,7 +225,17 @@ public class PolygonCommand : MonoBehaviour
             HelpPanel.SetActive(false);
             HelpTextGroup.SetActive(false);
         }
-        
+
+        /* 업적 부분 */
+        //
+        if (stage >= 10) Social.ReportProgress(GPGSIds.achievement_diamond, 100, (bool success) => { });
+        if (stage >= 100) Social.ReportProgress(GPGSIds.achievement_100_clear, 100, (bool success) => { });
+        if (stage >= 300) Social.ReportProgress(GPGSIds.achievement_300_clear, 100, (bool success) => { });
+        if (stage >= 600) Social.ReportProgress(GPGSIds.achievement_600_clear, 100, (bool success) => { });
+        if (stage >= 1000) Social.ReportProgress(GPGSIds.achievement__1000_clear, 100, (bool success) => { });
+
+        //
+
         VeryFirstPosSet(new Vector3(0, -5f, 0));
 
         if (Input.GetMouseButtonDown(0) && NowPlaying())

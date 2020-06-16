@@ -21,7 +21,7 @@ MonoBehaviour:
   m_ShowMode: 4
   m_Title: 
   m_RootView: {fileID: 8}
-  m_MinSize: {x: 950, y: 474}
+  m_MinSize: {x: 950, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_Maximized: 1
 --- !u!114 &2
@@ -74,7 +74,7 @@ MonoBehaviour:
   m_MinSize: {x: 304, y: 200}
   m_MaxSize: {x: 8004, y: 4024}
   vertical: 0
-  controlID: 16
+  controlID: 73
 --- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -125,7 +125,7 @@ MonoBehaviour:
   m_MinSize: {x: 683, y: 424}
   m_MaxSize: {x: 12008, y: 8048}
   vertical: 0
-  controlID: 99
+  controlID: 14
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -203,7 +203,7 @@ MonoBehaviour:
     y: 0
     width: 2560
     height: 1357
-  m_MinSize: {x: 950, y: 474}
+  m_MinSize: {x: 950, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
 --- !u!114 &9
 MonoBehaviour:
@@ -272,7 +272,7 @@ MonoBehaviour:
   m_MinSize: {x: 406, y: 424}
   m_MaxSize: {x: 8006, y: 8048}
   vertical: 1
-  controlID: 100
+  controlID: 15
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -297,7 +297,7 @@ MonoBehaviour:
   m_MinSize: {x: 406, y: 224}
   m_MaxSize: {x: 8006, y: 4024}
   vertical: 0
-  controlID: 101
+  controlID: 16
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -515,14 +515,14 @@ MonoBehaviour:
   m_LastFolders:
   - Assets/Scenes
   m_LastFoldersGridSize: 90
-  m_LastProjectPath: D:\Unity\PolygonOut_sample\PolygonOut_sample
+  m_LastProjectPath: D:\Unity\PolygonOut\PolygonOut_sample
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 5a270000
-    m_LastClickedID: 10074
-    m_ExpandedIDs: 00000000362600005827000000ca9a3b
+    m_SelectedIDs: 5c270000
+    m_LastClickedID: 10076
+    m_ExpandedIDs: 00000000382600005a27000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -550,7 +550,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000003626000058270000
+    m_ExpandedIDs: 00000000382600005a270000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -575,8 +575,8 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: ce290000
-    m_LastClickedInstanceID: 10702
+    m_SelectedInstanceIDs: 22240000
+    m_LastClickedInstanceID: 9250
     m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: c6230000202800000a3bffff302800006c2a000056280000bc280000402800008628000060280000362b0000000000008e2800000e280000ac270000b228000034280000
     m_RenameOverlay:
@@ -671,21 +671,21 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 86ebffffdefbffff48290000582900005e290000702900007a290000a6290000d4290000f2290000fc2900001e2a0000702a00007a2a0000802a0000122b00001c2b0000e2320000f2320000
+      m_ExpandedIDs: f0e6ffff18e7ffff30e7ffff5ae8ffffdee9ffff06eaffff1eeaffff48ebffff04f3ffff2cf3ffff44f3ffff72f4ffffdefbffff703500009e350000883b0000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
-        m_Name: PausePanel
-        m_OriginalName: PausePanel
+        m_Name: 
+        m_OriginalName: 
         m_EditFieldRect:
           serializedVersion: 2
           x: 0
           y: 0
           width: 0
           height: 0
-        m_UserData: 10584
+        m_UserData: 0
         m_IsWaitingForDelay: 0
         m_IsRenaming: 0
-        m_OriginalEventType: 0
+        m_OriginalEventType: 11
         m_IsRenamingFilename: 0
         m_ClientGUIView: {fileID: 2}
       m_SearchString: 

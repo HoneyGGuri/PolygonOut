@@ -1,0 +1,9 @@
+lastUpgrade=01009
+proj.pluginVersion=0.10.09
+proj.AppId=707913797769
+and.BundleId=com.HoneyGames.PolygonOut
+proj.classDir=Assets
+proj.ConstantsClassName=GPGSIds
+and.ResourceData=%3c%3fxml+version%3d%221.0%22+encoding%3d%22utf-8%22%3f%3e%0d%0a%3c%21--%0d%0aGoogle+Play+game+services+IDs.%0d%0aSave+this+file+as+res%2fvalues%2fgames-ids.xml+in+your+project.%0d%0a--%3e%0d%0a%3cresources%3e%0d%0a++%3c%21--+app_id+--%3e%0d%0a++%3cstring+name%3d%22app_id%22+translatable%3d%22false%22%3e707913797769%3c%2fstring%3e%0d%0a++%3c%21--+package_name+--%3e%0d%0a++%3cstring+name%3d%22package_name%22+translatable%3d%22false%22%3ecom.HoneyGames.PolygonOut%3c%2fstring%3e%0d%0a++%3c%21--+achievement+login+--%3e%0d%0a++%3cstring+name%3d%22achievement_login%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQAQ%3c%2fstring%3e%0d%0a++%3c%21--+achievement+100+Clear%21+--%3e%0d%0a++%3cstring+name%3d%22achievement_100_clear%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQAg%3c%2fstring%3e%0d%0a++%3c%21--+achievement+300+Clear%21%21+--%3e%0d%0a++%3cstring+name%3d%22achievement_300_clear%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQAw%3c%2fstring%3e%0d%0a++%3c%21--+achievement+600+Clear%21%21%21+--%3e%0d%0a++%3cstring+name%3d%22achievement_600_clear%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQBA%3c%2fstring%3e%0d%0a++%3c%21--+achievement+%21%21%21+1000+CLEAR+%21%21%21+--%3e%0d%0a++%3cstring+name%3d%22achievement__1000_clear%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQBQ%3c%2fstring%3e%0d%0a++%3c%21--+achievement+Diamond+--%3e%0d%0a++%3cstring+name%3d%22achievement_diamond%22+translatable%3d%22false%22%3eCgkIiaHNl80UEAIQBw%3c%2fstring%3e%0d%0a%3c%2fresources%3e%0d%0a
+and.ClientId=707913797769-lgdd3o5tdn88dagk61fgl7f1rthqddud.apps.googleusercontent.com
+android.SetupDone=true
